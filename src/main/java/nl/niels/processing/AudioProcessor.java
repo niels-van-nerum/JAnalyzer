@@ -1,10 +1,15 @@
 package nl.niels.processing;
 
+import org.jtransforms.fft.DoubleFFT_1D;
+
+import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class AudioProcessor implements Runnable {
     private final LinkedBlockingQueue<byte[]> consumingQueue;
     private final LinkedBlockingQueue<byte[]> producingQueue;
+    private final DoubleFFT_1D fft = new DoubleFFT_1D(FFT_SIZE);
+    private static final int FFT_SIZE = 1024;
 
     public AudioProcessor(LinkedBlockingQueue<byte[]> consumingQueue, LinkedBlockingQueue<byte[]> producingQueue) {
         this.consumingQueue = consumingQueue;
@@ -30,8 +35,10 @@ public class AudioProcessor implements Runnable {
         return samples;
     }
 
-    private void runFft() {
-
+    private double[] runFft(double[] samples) {
+        double[] extendedSamples = Arrays.copyOf(samples, FFT_SIZE * 2);
+        fft.realForwardFull(extendedSamples);
+        return extendedSamples;
     }
 
     private void toMagnitudes() {
