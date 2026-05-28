@@ -1,27 +1,17 @@
 # Spectrum Analyzer
 
-Reads audio playing on your computer (e.g. Spotify), figures out which frequencies are loud at any given moment, and sends those results over the network.
+Captures system audio, runs an FFT on it, and sends the frequency magnitudes over UDP. The idea is that something else — a visualizer, LED strip, whatever — picks up those UDP packets and does something with them.
 
-## What it does
+## Pipeline
 
-Your music is made up of many sine waves at different frequencies playing at the same time. This app listens to that audio 50 times per second, figures out how loud each frequency is, and broadcasts the results over UDP — so something else (like a visualizer or LED strip) can react to it in real time.
+Audio capture → FFT processing → UDP transmit. Each step runs on its own thread and hands chunks to the next via a LinkedBlockingQueue.
 
-## How it works
+The queue is bounded and uses `offer()` to drop chunks when full. Old audio is useless, so dropping is the right call.
 
-1. **AudioCapture** — listens to your system audio and slices it into 20ms chunks of raw bytes.
-2. **AudioProcessor** — converts those bytes into audio samples, runs an FFT to find out which frequencies are present and how loud they are, and produces a list of magnitudes — one number per frequency bucket.
-3. **UdpTransmitter** *(not yet built)* — takes those magnitudes and broadcasts them over UDP.
+`Arrays.copyOf` before enqueuing — the read buffer gets reused, so you need a fresh copy or the processor sees garbage.
 
-Each step runs on its own thread. They hand work to each other through a queue.
+## FFT
 
-## Design decisions
+Chunks are 20ms of 48kHz stereo 16-bit audio (3840 bytes). After converting to mono doubles that's 960 samples. Zero-padded to 1024 (next power of 2) before the FFT. Zeros are silence, they don't add fake frequencies.
 
-**Three threads, two queues** — Capture, processing, and transmitting run independently. If one is slow, it doesn't stall the others.
-
-**Bounded queue with drop-on-full** — If the processor can't keep up, old chunks are dropped rather than queued up forever. For live audio this is the right call: a chunk that is a few seconds old is useless.
-
-**Arrays.copyOf before queuing** — The audio buffer gets reused on every read. Copying into a fresh array means the processor always sees stable data.
-
-**20ms chunks** — Small enough to feel real-time, large enough to give the FFT useful frequency resolution.
-
-**FFT size of 1024** — Each chunk produces 960 mono samples. The FFT works fastest on powers of 2, so samples are zero-padded to 1024 before processing. Zeros mean silence — no fake frequencies are introduced.
+The FFT gives back a complex number per frequency bin — real and imaginary. We only care about the amplitude, so we take `sqrt(re² + im²)` for each bin and group the results into buckets.
