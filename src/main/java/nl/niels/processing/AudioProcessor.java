@@ -41,7 +41,7 @@ public class AudioProcessor implements Runnable {
         return extendedSamples;
     }
 
-    private void toMagnitudes() {
+    private double[] toMagnitudes(double[] fftResult, int buckets) {
 
     }
 }
