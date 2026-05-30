@@ -42,6 +42,10 @@ public class AudioProcessor implements Runnable {
     }
 
     private double[] toMagnitudes(double[] fftResult, int buckets) {
-
+        double[] magnitudes = new double[fftResult.length / 4];
+        for (int i = 0; i < (fftResult.length / 4); i++) {
+            magnitudes[i] = Math.sqrt(Math.pow(fftResult[i * 2], 2) + Math.pow(fftResult[i * 2 + 1], 2));
+        }
+        return magnitudes;
     }
 }
