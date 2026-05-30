@@ -75,7 +75,7 @@ public class AudioProcessor implements Runnable {
                 }
             }
 
-            result[i] = max;
+            result[i] = max / FFT_SIZE;
         }
 
         return result;
