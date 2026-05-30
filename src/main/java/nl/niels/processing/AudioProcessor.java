@@ -35,17 +35,36 @@ public class AudioProcessor implements Runnable {
         return samples;
     }
 
-    private double[] runFft(double[] samples) {
+    protected double[] runFft(double[] samples) {
         double[] extendedSamples = Arrays.copyOf(samples, FFT_SIZE * 2);
         fft.realForwardFull(extendedSamples);
         return extendedSamples;
     }
 
-    private double[] toMagnitudes(double[] fftResult, int buckets) {
+    protected double[] toMagnitudes(double[] fftResult) {
         double[] magnitudes = new double[fftResult.length / 4];
         for (int i = 0; i < (fftResult.length / 4); i++) {
             magnitudes[i] = Math.sqrt(Math.pow(fftResult[i * 2], 2) + Math.pow(fftResult[i * 2 + 1], 2));
         }
         return magnitudes;
+    }
+
+    protected double[] toBuckets(double[] magnitudes, int buckets) {
+        double[] result = new double[buckets];
+        for (int i = 0; i < buckets; i++) {
+            double start = Math.pow(magnitudes.length, (double) i / buckets);
+            double end = Math.pow(magnitudes.length, (double) (i + 1) / buckets);
+
+            double max = 0;
+            for (int j = (int) start; j < end; j++) {
+                if (magnitudes[j] > max) {
+                    max = magnitudes[j];
+                }
+            }
+
+            result[i] = max;
+        }
+
+        return result;
     }
 }
