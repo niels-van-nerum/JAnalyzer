@@ -2,6 +2,7 @@ package nl.niels.processing;
 
 import org.jtransforms.fft.DoubleFFT_1D;
 
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -9,8 +10,10 @@ public class AudioProcessor implements Runnable {
     private final LinkedBlockingQueue<byte[]> consumingQueue;
     private final LinkedBlockingQueue<double[]> producingQueue;
     private final DoubleFFT_1D fft = new DoubleFFT_1D(FFT_SIZE);
+    private final ArrayDeque<double[]> history = new ArrayDeque<>();
     private static final int FFT_SIZE = 1024;
-    private static final int BUCKETS = 7;
+    private static final int BUCKETS = 21;
+    private static final int HISTORY_FRAMES = 1400;
 
     public AudioProcessor(LinkedBlockingQueue<byte[]> consumingQueue, LinkedBlockingQueue<double[]> producingQueue) {
         this.consumingQueue = consumingQueue;
@@ -25,8 +28,9 @@ public class AudioProcessor implements Runnable {
                 double[] samples = toSamples(chunk);
                 double[] fftResult = runFft(samples);
                 double[] magnitudes = toMagnitudes(fftResult);
-                double[] result = toBuckets(magnitudes, BUCKETS);
-                producingQueue.offer(result);
+                double[] result = toBuckets(magnitudes);
+                addHistory(result);
+                producingQueue.offer(normalize(result));
             }
 
         } catch (InterruptedException e) {
@@ -62,11 +66,11 @@ public class AudioProcessor implements Runnable {
         return magnitudes;
     }
 
-    protected double[] toBuckets(double[] magnitudes, int buckets) {
-        double[] result = new double[buckets];
-        for (int i = 0; i < buckets; i++) {
-            double start = Math.pow(magnitudes.length, (double) i / buckets);
-            double end = Math.pow(magnitudes.length, (double) (i + 1) / buckets);
+    protected double[] toBuckets(double[] magnitudes) {
+        double[] result = new double[AudioProcessor.BUCKETS];
+        for (int i = 0; i < AudioProcessor.BUCKETS; i++) {
+            double start = Math.pow(magnitudes.length, (double) i / AudioProcessor.BUCKETS);
+            double end = Math.pow(magnitudes.length, (double) (i + 1) / AudioProcessor.BUCKETS);
 
             double max = 0;
             for (int j = (int) start; j < end; j++) {
@@ -75,9 +79,41 @@ public class AudioProcessor implements Runnable {
                 }
             }
 
-            result[i] = max / FFT_SIZE;
+            result[i] = max;
         }
 
         return result;
+    }
+
+    protected double[] normalize(double[] buckets) {
+        double[] normalized = new double[BUCKETS];
+
+        double[] maximums = new double[BUCKETS];
+
+        for (double[] frame : history) {
+            for (int i = 0; i < frame.length; i++) {
+                if (frame[i] > maximums[i]) {
+                    maximums[i] = frame[i];
+                }
+            }
+        }
+
+        for (int i = 0; i < maximums.length; i++) {
+            if (maximums[i] == 0) {
+                normalized[i] = buckets[i];
+            } else {
+                normalized[i] = buckets[i] / maximums[i];
+            }
+        }
+
+        return normalized;
+    }
+
+    protected void addHistory(double[] frame) {
+        history.add(frame);
+
+        if (history.size() > HISTORY_FRAMES) {
+            history.removeFirst();
+        }
     }
 }

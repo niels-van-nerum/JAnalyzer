@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class AudioCapture implements Runnable {
-    private final AudioFormat format = new AudioFormat(48000, 16, 2, true, false);
+    private final AudioFormat format = new AudioFormat(44100, 16, 2, true, false);
     private final LinkedBlockingQueue<byte[]> queue;
     private final TargetDataLine targetDataLine;
     private static final int CHUNK_SIZE = 3840;

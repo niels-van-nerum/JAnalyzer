@@ -13,7 +13,7 @@ public class UdpTransmitter implements Runnable {
         this.consumingQueue = consumingQueue;
         socket = new DatagramSocket();
         socket.setBroadcast(true);
-        address = InetAddress.ofLiteral("192.168.1.255");
+        address = InetAddress.ofLiteral("192.168.2.255");
     }
     
     @Override
