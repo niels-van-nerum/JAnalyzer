@@ -7,18 +7,31 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class AudioProcessor implements Runnable {
     private final LinkedBlockingQueue<byte[]> consumingQueue;
-    private final LinkedBlockingQueue<byte[]> producingQueue;
+    private final LinkedBlockingQueue<double[]> producingQueue;
     private final DoubleFFT_1D fft = new DoubleFFT_1D(FFT_SIZE);
     private static final int FFT_SIZE = 1024;
+    private static final int BUCKETS = 7;
 
-    public AudioProcessor(LinkedBlockingQueue<byte[]> consumingQueue, LinkedBlockingQueue<byte[]> producingQueue) {
+    public AudioProcessor(LinkedBlockingQueue<byte[]> consumingQueue, LinkedBlockingQueue<double[]> producingQueue) {
         this.consumingQueue = consumingQueue;
         this.producingQueue = producingQueue;
     }
 
     @Override
     public void run() {
+        try {
+            while (true) {
+                byte[] chunk = consumingQueue.take();
+                double[] samples = toSamples(chunk);
+                double[] fftResult = runFft(samples);
+                double[] magnitudes = toMagnitudes(fftResult);
+                double[] result = toBuckets(magnitudes, BUCKETS);
+                producingQueue.offer(result);
+            }
 
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected double[] toSamples(byte[] chunk) {
