@@ -1,5 +1,8 @@
 package nl.niels.capture;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.sound.sampled.*;
 import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -9,6 +12,7 @@ public class AudioCapture implements Runnable {
     private final LinkedBlockingQueue<byte[]> queue;
     private final TargetDataLine targetDataLine;
     private static final int CHUNK_SIZE = 3840;
+    private static final Logger LOGGER = LoggerFactory.getLogger(AudioCapture.class);
 
     public AudioCapture(LinkedBlockingQueue<byte[]> queue) throws LineUnavailableException {
         this.targetDataLine = getTargetDataLine();
@@ -17,11 +21,23 @@ public class AudioCapture implements Runnable {
 
     private TargetDataLine getTargetDataLine() throws LineUnavailableException {
         DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
-        return (TargetDataLine) AudioSystem.getLine(info);
+        Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
+
+        for (Mixer.Info mixerInfo : mixerInfos) {
+            Mixer mixer = AudioSystem.getMixer(mixerInfo);
+            if (mixer.isLineSupported(info)) {
+                LOGGER.info("AudioCapture created targeting line: {} with format: {}", mixerInfo, format);
+                return (TargetDataLine) mixer.getLine(info);
+            }
+        }
+
+        throw new LineUnavailableException("No matching line found.");
     }
 
     @Override
     public void run() {
+        LOGGER.info("Audio capture started");
+
         try {
             targetDataLine.open(format);
             targetDataLine.start();

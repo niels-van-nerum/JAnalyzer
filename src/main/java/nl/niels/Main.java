@@ -3,6 +3,8 @@ package nl.niels;
 import nl.niels.capture.AudioCapture;
 import nl.niels.processing.AudioProcessor;
 import nl.niels.transmit.UdpTransmitter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.sound.sampled.LineUnavailableException;
 import java.net.SocketException;
@@ -12,8 +14,17 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class Main {
     private static final int QUEUE_SIZE = 10;
+    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     static void main() throws LineUnavailableException, SocketException {
+        printBanner();
+        ExecutorService executorService = Executors.newFixedThreadPool(3, runnable -> {
+            Thread thread = new Thread(runnable);
+            thread.setUncaughtExceptionHandler((t, throwable) ->
+                    LOGGER.error("Thread {} died unexpectedly", t.getName(), throwable));
+            return thread;
+        });
+
         LinkedBlockingQueue<byte[]> audioQueue = new LinkedBlockingQueue<>(QUEUE_SIZE);
         LinkedBlockingQueue<double[]> measurementQueue = new LinkedBlockingQueue<>(QUEUE_SIZE);
 
@@ -21,9 +32,26 @@ public class Main {
         AudioProcessor audioProcessor = new AudioProcessor(audioQueue, measurementQueue);
         UdpTransmitter udpTransmitter = new UdpTransmitter(measurementQueue);
 
-        ExecutorService executorService = Executors.newFixedThreadPool(3);
         executorService.submit(audioCapture);
         executorService.submit(audioProcessor);
         executorService.submit(udpTransmitter);
+    }
+
+    private static void printBanner() {
+        System.out.print("""
+
+                    /$$$$$  /$$$$$$                      /$$                                       \s
+                   |__  $$ /$$__  $$                    | $$                                       \s
+                      | $$| $$  \\ $$ /$$$$$$$   /$$$$$$ | $$ /$$   /$$ /$$$$$$$$  /$$$$$$   /$$$$$$\s
+                      | $$| $$$$$$$$| $$__  $$ |____  $$| $$| $$  | $$|____ /$$/ /$$__  $$ /$$__  $$
+                 /$$  | $$| $$__  $$| $$  \\ $$  /$$$$$$$| $$| $$  | $$   /$$$$/ | $$$$$$$$| $$  \\__/
+                | $$  | $$| $$  | $$| $$  | $$ /$$__  $$| $$| $$  | $$  /$$__/  | $$_____/| $$     \s
+                |  $$$$$$/| $$  | $$| $$  | $$|  $$$$$$$| $$|  $$$$$$$ /$$$$$$$$|  $$$$$$$| $$     \s
+                 \\______/ |__/  |__/|__/  |__/ \\_______/|__/ \\____  $$|________/ \\_______/|__/     \s
+                                                             /$$  | $$                             \s
+                                                            |  $$$$$$/                             \s
+                                                             \\______/                              \s
+                
+                """);
     }
 }

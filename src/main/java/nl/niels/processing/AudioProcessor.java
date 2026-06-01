@@ -1,6 +1,8 @@
 package nl.niels.processing;
 
 import org.jtransforms.fft.DoubleFFT_1D;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
@@ -14,6 +16,7 @@ public class AudioProcessor implements Runnable {
     private static final int FFT_SIZE = 1024;
     private static final int BUCKETS = 21;
     private static final int HISTORY_FRAMES = 1400;
+    private static final Logger LOGGER = LoggerFactory.getLogger(AudioProcessor.class);
 
     public AudioProcessor(LinkedBlockingQueue<byte[]> consumingQueue, LinkedBlockingQueue<double[]> producingQueue) {
         this.consumingQueue = consumingQueue;
@@ -22,6 +25,8 @@ public class AudioProcessor implements Runnable {
 
     @Override
     public void run() {
+        LOGGER.info("Audio processing started");
+
         try {
             while (true) {
                 byte[] chunk = consumingQueue.take();
