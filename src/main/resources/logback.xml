@@ -1,10 +1,12 @@
-<configuration>
+<configuration debug="false">
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%cyan(%d{HH:mm:ss.SSS}) %highlight(%-5level) %magenta(%logger{36}) - %msg%n</pattern>
+            <pattern>%neonCyan(%d{HH:mm:ss.SSS}) %highlight(%-5level) %neonMagenta(%logger{36}) - %msg%n</pattern>
         </encoder>
     </appender>
     <root level="info">
         <appender-ref ref="STDOUT" />
     </root>
+    <conversionRule conversionWord="neonMagenta" class="nl.niels.logging.NeonMagentaConverter" />
+    <conversionRule conversionWord="neonCyan" class="nl.niels.logging.NeonCyanConverter" />
 </configuration>
