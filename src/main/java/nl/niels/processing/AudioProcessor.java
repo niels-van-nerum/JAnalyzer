@@ -58,7 +58,14 @@ public class AudioProcessor implements Runnable {
     }
 
     protected double[] runFft(double[] samples) {
-        double[] extendedSamples = Arrays.copyOf(samples, FFT_SIZE * 2);
+        double[] windowedSamples = Arrays.copyOf(samples, samples.length);
+
+        // Hann window function to taper edges to zero and reduce spectral leakage
+        for (int i = 0; i < windowedSamples.length; i++) {
+            windowedSamples[i] *= 0.5 * (1 - Math.cos(2 * Math.PI * i / (samples.length - 1)));
+        }
+
+        double[] extendedSamples = Arrays.copyOf(windowedSamples, FFT_SIZE * 2);
         fft.realForwardFull(extendedSamples);
         return extendedSamples;
     }
