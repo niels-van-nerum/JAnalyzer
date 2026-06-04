@@ -14,7 +14,7 @@ public class AudioProcessor implements Runnable {
     private final DoubleFFT_1D fft = new DoubleFFT_1D(FFT_SIZE);
     private final ArrayDeque<double[]> history = new ArrayDeque<>();
     private static final int FFT_SIZE = 1024;
-    private static final int BUCKETS = 21;
+    private static final int BUCKETS = 7;
     private static final int HISTORY_FRAMES = 1400;
     private static final Logger LOGGER = LoggerFactory.getLogger(AudioProcessor.class);
 
