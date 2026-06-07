@@ -17,6 +17,7 @@ public class AudioCapture implements Runnable {
     public AudioCapture(LinkedBlockingQueue<byte[]> queue) throws LineUnavailableException {
         this.targetDataLine = getTargetDataLine();
         this.queue = queue;
+        printDevices();
     }
 
     private TargetDataLine getTargetDataLine() throws LineUnavailableException {
@@ -32,6 +33,17 @@ public class AudioCapture implements Runnable {
         }
 
         throw new LineUnavailableException("No matching line found.");
+    }
+
+    private void printDevices() {
+        Mixer.Info[] mixers = AudioSystem.getMixerInfo();
+        StringBuilder builder = new StringBuilder("Listing devices:\n");
+
+        for (Mixer.Info mixer : mixers) {
+            builder.append(String.format("\t\t\t\t%s %s\n", mixer.getName(), mixer.getDescription()));
+        }
+
+        LOGGER.info(builder.toString());
     }
 
     @Override
