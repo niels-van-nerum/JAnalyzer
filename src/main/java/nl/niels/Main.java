@@ -25,10 +25,12 @@ public class Main {
             return thread;
         });
 
+        Configuration configuration = new Configuration("alsa", 3840);
+
         LinkedBlockingQueue<byte[]> audioQueue = new LinkedBlockingQueue<>(QUEUE_SIZE);
         LinkedBlockingQueue<double[]> measurementQueue = new LinkedBlockingQueue<>(QUEUE_SIZE);
 
-        AudioCapture audioCapture = new AudioCapture(audioQueue);
+        AudioCapture audioCapture = new AudioCapture(audioQueue, configuration);
         AudioProcessor audioProcessor = new AudioProcessor(audioQueue, measurementQueue);
         UdpTransmitter udpTransmitter = new UdpTransmitter(measurementQueue);
 
