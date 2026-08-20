@@ -1,14 +1,13 @@
 package nl.niels.processing;
 
+import nl.niels.PipelineWorker;
 import org.jtransforms.fft.DoubleFFT_1D;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class AudioProcessor implements Runnable {
+public class AudioProcessor extends PipelineWorker {
     private final LinkedBlockingQueue<byte[]> consumingQueue;
     private final LinkedBlockingQueue<double[]> producingQueue;
     private final DoubleFFT_1D fft = new DoubleFFT_1D(FFT_SIZE);
@@ -16,7 +15,6 @@ public class AudioProcessor implements Runnable {
     private static final int FFT_SIZE = 1024;
     private static final int BUCKETS = 7;
     private static final int HISTORY_FRAMES = 1400;
-    private static final Logger LOGGER = LoggerFactory.getLogger(AudioProcessor.class);
 
     public AudioProcessor(LinkedBlockingQueue<byte[]> consumingQueue, LinkedBlockingQueue<double[]> producingQueue) {
         this.consumingQueue = consumingQueue;
@@ -24,20 +22,15 @@ public class AudioProcessor implements Runnable {
     }
 
     @Override
-    public void run() {
-        LOGGER.info("Audio processing started");
-
+    protected void process() {
         try {
-            while (true) {
-                byte[] chunk = consumingQueue.take();
-                double[] samples = toSamples(chunk);
-                double[] fftResult = runFft(samples);
-                double[] magnitudes = toMagnitudes(fftResult);
-                double[] result = toBuckets(magnitudes);
-                addHistory(result);
-                producingQueue.offer(normalize(result));
-            }
-
+            byte[] chunk = consumingQueue.take();
+            double[] samples = toSamples(chunk);
+            double[] fftResult = runFft(samples);
+            double[] magnitudes = toMagnitudes(fftResult);
+            double[] result = toBuckets(magnitudes);
+            addHistory(result);
+            producingQueue.offer(normalize(result));
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

@@ -1,18 +1,16 @@
 package nl.niels.capture;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import nl.niels.PipelineWorker;
 
 import javax.sound.sampled.*;
 import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class AudioCapture implements Runnable {
+public class AudioCapture extends PipelineWorker {
     private final AudioFormat format = new AudioFormat(44100, 16, 2, true, false);
     private final LinkedBlockingQueue<byte[]> queue;
     private final TargetDataLine targetDataLine;
     private static final int CHUNK_SIZE = 3840;
-    private static final Logger LOGGER = LoggerFactory.getLogger(AudioCapture.class);
 
     public AudioCapture(LinkedBlockingQueue<byte[]> queue) throws LineUnavailableException {
         this.targetDataLine = getTargetDataLine();
@@ -44,6 +42,11 @@ public class AudioCapture implements Runnable {
         }
 
         LOGGER.info(builder.toString());
+    }
+
+    @Override
+    protected void process() {
+
     }
 
     @Override

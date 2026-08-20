@@ -1,18 +1,16 @@
 package nl.niels.transmit;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import nl.niels.PipelineWorker;
 
 import java.io.IOException;
 import java.net.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class UdpTransmitter implements Runnable {
+public class UdpTransmitter extends PipelineWorker {
     private final LinkedBlockingQueue<double[]> consumingQueue;
     private final DatagramSocket socket;
     private final InetAddress address;
     private static final int PORT = 4445;
-    private static final Logger LOGGER = LoggerFactory.getLogger(UdpTransmitter.class);
 
     public UdpTransmitter(LinkedBlockingQueue<double[]> consumingQueue) throws SocketException {
         this.consumingQueue = consumingQueue;
@@ -22,17 +20,13 @@ public class UdpTransmitter implements Runnable {
 
         LOGGER.info("UDP transmitter created with address: {} and port: {}", address.getCanonicalHostName(), PORT);
     }
-    
-    @Override
-    public void run() {
-        LOGGER.info("UDP transmitter started");
 
+    @Override
+    protected void process() {
         try {
-            while (true) {
-                byte[] bytes = toBytes(consumingQueue.take());
-                DatagramPacket packet = new DatagramPacket(bytes, bytes.length, address, PORT);
-                socket.send(packet);
-            }
+            byte[] bytes = toBytes(consumingQueue.take());
+            DatagramPacket packet = new DatagramPacket(bytes, bytes.length, address, PORT);
+            socket.send(packet);
         } catch (InterruptedException | IOException e) {
             throw new RuntimeException(e);
         }
