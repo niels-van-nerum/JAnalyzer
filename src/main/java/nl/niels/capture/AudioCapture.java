@@ -1,12 +1,13 @@
 package nl.niels.capture;
 
 import nl.niels.PipelineWorker;
+import nl.niels.ProducingWorker;
 
 import javax.sound.sampled.*;
 import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class AudioCapture extends PipelineWorker {
+public class AudioCapture extends PipelineWorker implements ProducingWorker<AudioSignal> {
     private final AudioFormat format = new AudioFormat(44100, 16, 2, true, false);
     private final LinkedBlockingQueue<byte[]> queue;
     private final TargetDataLine targetDataLine;
@@ -67,5 +68,10 @@ public class AudioCapture extends PipelineWorker {
         } catch (LineUnavailableException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public AudioSignal produce() {
+        return null;
     }
 }

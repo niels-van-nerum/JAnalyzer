@@ -1,13 +1,15 @@
 package nl.niels.processing;
 
+import nl.niels.ConsumingWorker;
 import nl.niels.PipelineWorker;
+import nl.niels.ProducingWorker;
 import org.jtransforms.fft.DoubleFFT_1D;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class AudioProcessor extends PipelineWorker {
+public class AudioProcessor extends PipelineWorker implements ConsumingWorker<AudioSignal>, ProducingWorker<TransmittedSignal> {
     private final LinkedBlockingQueue<byte[]> consumingQueue;
     private final LinkedBlockingQueue<double[]> producingQueue;
     private final DoubleFFT_1D fft = new DoubleFFT_1D(FFT_SIZE);
@@ -120,5 +122,15 @@ public class AudioProcessor extends PipelineWorker {
         if (history.size() > HISTORY_FRAMES) {
             history.removeFirst();
         }
+    }
+
+    @Override
+    public void consume(AudioSignal signal) {
+
+    }
+
+    @Override
+    public TransmittedSignal produce() {
+        return null;
     }
 }

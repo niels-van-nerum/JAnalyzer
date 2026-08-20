@@ -1,12 +1,13 @@
 package nl.niels.transmit;
 
+import nl.niels.ConsumingWorker;
 import nl.niels.PipelineWorker;
 
 import java.io.IOException;
 import java.net.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class UdpTransmitter extends PipelineWorker {
+public class UdpTransmitter extends PipelineWorker implements ConsumingWorker<TransmittedSignal> {
     private final LinkedBlockingQueue<double[]> consumingQueue;
     private final DatagramSocket socket;
     private final InetAddress address;
@@ -38,5 +39,10 @@ public class UdpTransmitter extends PipelineWorker {
             bytes[i] = (byte) (measurements[i] * 255);
         }
         return bytes;
+    }
+
+    @Override
+    public void consume(TransmittedSignal signal) {
+
     }
 }
